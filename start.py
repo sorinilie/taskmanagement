@@ -7,6 +7,8 @@ import csv
 import operator
 import numpy
 
+print("reading")
+
 task_skill = [(line.rstrip('\n')).split(',') for line in open('2000tasks.csv')]
 task_eta =[line.rstrip('\n') for line in open('task-eta.csv')]
 skill_level=[(line.rstrip('\n')).split(',') for line in open('100people.csv')]
@@ -17,6 +19,7 @@ r=[[0 for x in range(100)] for y in range(2000)]
 
 etas=[[0 for x in range(100)] for y in range(2000)] 
 
+print("started first skills")
 
 task_count=0
 for ts in task_skill :
@@ -55,97 +58,44 @@ for ts in task_skill :
 #     writer = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
 #     writer.writerows(etas)
 
+print("started allocations")
 
-i=0
-aux=[[0 for x in range(2000)] for y in range(100)] 
-for b in best :
-    index, value = max(enumerate(b), key=operator.itemgetter(1))
-    aux[index][i]=etas[i][index]
-    i+=1
-print("best:  ")
-print(max([sum(a) for a in aux]))
-print("total")
-print(sum([sum(a) for a in aux])) 
-null_count=0
-for a in aux :
-    if (sum(a)==0):
-        null_count+=1
-print("unused resources")
-print(null_count)
-
-i=0
-aux=[[0 for x in range(2000)] for y in range(100)] 
-for b in r :
-    index, value = max(enumerate(b), key=operator.itemgetter(1))
-    aux[index][i]=etas[i][index]
-    i+=1
-print("most suited:  ")
-print(max([sum(a) for a in aux]))
-print("total")
-print(sum([sum(a) for a in aux])) 
-null_count=0
-for a in aux :
-    if (sum(a)==0):
-        null_count+=1
-print("unused resources")
-print(null_count)
-
-i=0
-aux=[[0 for x in range(2000)] for y in range(100)] 
-for b in etas :
-    index, value = min(enumerate(b), key=operator.itemgetter(1))
-    aux[index][i]=etas[i][index]
-    i+=1
-print("fastest:  ")
-print(max([sum(a) for a in aux]))
-print("total")
-print(sum([sum(a) for a in aux])) 
-null_count=0
-for a in aux :
-    if (sum(a)==0):
-        null_count+=1
-print("unused resources")
-print(null_count)
-    
-eta_sum=0
 eta_num=0
 eta_sum_free=0
-best_free=[[0 for x in range(100)] for y in range(2000)] 
 fast_free=[[0 for x in range(100)] for y in range(2000)] 
 
 best_fast=[[0 for x in range(100)] for y in range(2000)] 
 i=0
 for p, e in zip(r,etas):
-    if (eta_sum==0):
-        chosen,value=max(enumerate([p[j]/e[j] for j in range(len(p))]), key=operator.itemgetter(1))
+    if (eta_sum_free==0):
         chosen1,value1=max(enumerate([1/e[j] for j in range(len(p))]), key=operator.itemgetter(1))
     else :
-        chosen, value=max(enumerate([p[j]/(e[j]*(sum(row[j] for row in best_fast) if sum(row[j] for row in best_fast)>0 else 1 )/(eta_sum/eta_num)) for j in range(len(p))]), key=operator.itemgetter(1))
         chosen1, value1=max(enumerate([1/(e[j]*(sum(row[j] for row in fast_free) if sum(row[j] for row in fast_free)>0 else 1 )/(eta_sum_free/eta_num)) for j in range(len(p))]), key=operator.itemgetter(1))
        
-    best_fast[i][chosen]=etas[i][chosen]
+
     fast_free[i][chosen1]=etas[i][chosen1]
     eta_sum_free+=etas[i][chosen1]
-    eta_sum+=etas[i][chosen]
+    
+  
+    
+    #start skill adjustment
+    for skill_index, current_skill in enumerate(skill_level[chosen1]):
+        skill_level[chosen1][skill_index]=max(
+            skill_level[chosen1][skill_index],
+            task_skill[i][skill_index])
+    task_count=0
+    for ts in task_skill :
+        #sqsum_ts=sum( [int(ts[i])*int(ts[i]) for i in range(len(ts))] )
+        sl=skill_level[chosen1]
+        extra_eta=0
+        for t, s in zip(ts, sl) :
+            if (int(t)>int(s)) :
+                extra_eta += (int(t)-int(s))/int(s)
+        etas[task_count][chosen1]=int(task_eta[task_count])+int(extra_eta)
+        task_count+=1
+    #finish skill adjustment
     eta_num+=1 
     i+=1
-
-i=0
-aux=[[0 for x in range(2000)] for y in range(100)] 
-for b in best_fast :
-    index, value = max(enumerate(b), key=operator.itemgetter(1))
-    aux[index][i]=etas[i][index]
-    i+=1
-print("most suited free:  ")
-print(max([sum(a) for a in aux])) 
-print("total")
-print(sum([sum(a) for a in aux])) 
-null_count=0
-for a in aux :
-    if (sum(a)==0):
-        null_count+=1
-print("unused resources")
-print(null_count)
 
 
 i=0
