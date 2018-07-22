@@ -9,15 +9,17 @@ import numpy
 
 print("reading")
 
-task_skill = [(line.rstrip('\n')).split(',') for line in open('2000tasks.csv')]
-task_eta =[line.rstrip('\n') for line in open('task-eta.csv')]
+task_number=100;
+
+task_skill = [(line.rstrip('\n')).split(',') for line in open('100tasks.csv')]
+task_eta =[line.rstrip('\n') for line in open('task-eta100.csv')]
 skill_level=[(line.rstrip('\n')).split(',') for line in open('100people.csv')]
 
 
-best=[[0 for x in range(100)] for y in range(2000)] 
-r=[[0 for x in range(100)] for y in range(2000)] 
+best=[[0 for x in range(100)] for y in range(task_number)] 
+r=[[0 for x in range(100)] for y in range(task_number)] 
 
-etas=[[0 for x in range(100)] for y in range(2000)] 
+etas=[[0 for x in range(100)] for y in range(task_number)] 
 
 print("started first skills")
 
@@ -58,13 +60,48 @@ for ts in task_skill :
 #     writer = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
 #     writer.writerows(etas)
 
-print("started allocations")
+print("started simple allocations")
 
 eta_num=0
 eta_sum_free=0
-fast_free=[[0 for x in range(100)] for y in range(2000)] 
+fast_free=[[0 for x in range(100)] for y in range(task_number)] 
 
-best_fast=[[0 for x in range(100)] for y in range(2000)] 
+best_fast=[[0 for x in range(100)] for y in range(task_number)] 
+i=0
+for p, e in zip(r,etas):
+    if (eta_sum_free==0):
+        chosen1,value1=max(enumerate([1/e[j] for j in range(len(p))]), key=operator.itemgetter(1))
+    else :
+        chosen1, value1=max(enumerate([1/(e[j]*(sum(row[j] for row in fast_free) if sum(row[j] for row in fast_free)>0 else 1 )/(eta_sum_free/eta_num)) for j in range(len(p))]), key=operator.itemgetter(1))
+    fast_free[i][chosen1]=etas[i][chosen1]
+    eta_sum_free+=etas[i][chosen1]
+    eta_num+=1 
+    i+=1
+
+
+i=0
+aux=[[0 for x in range(task_number)] for y in range(100)] 
+for b in fast_free :
+    index, value = max(enumerate(b), key=operator.itemgetter(1))
+    aux[index][i]=etas[i][index]
+    i+=1
+print("fastest free:  ")
+print(max([sum(a) for a in aux])) 
+print("total")
+print(sum([sum(a) for a in aux])) 
+null_count=0
+for a in aux :
+    if (sum(a)==0):
+        null_count+=1
+print("unused resources")
+print(null_count)
+
+print("started skill adapted allocations")
+eta_num=0
+eta_sum_free=0
+fast_free=[[0 for x in range(100)] for y in range(task_number)] 
+
+best_fast=[[0 for x in range(100)] for y in range(task_number)] 
 i=0
 for p, e in zip(r,etas):
     if (eta_sum_free==0):
@@ -99,7 +136,7 @@ for p, e in zip(r,etas):
 
 
 i=0
-aux=[[0 for x in range(2000)] for y in range(100)] 
+aux=[[0 for x in range(task_number)] for y in range(100)] 
 for b in fast_free :
     index, value = max(enumerate(b), key=operator.itemgetter(1))
     aux[index][i]=etas[i][index]
